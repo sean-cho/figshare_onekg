@@ -55,9 +55,10 @@ def logthis(String, logger=None):
 
 def get_metadata(logger=None):
     all_articles = get_collection_articles()
-    all_articles_info = [get_article_info(x) for x in all_articles]
+    all_articles_info = [get_article_info(x['id']) for x in all_articles]
     logthis('Downloading metadata from figshare website.', logger=logger)
     counter = 0
+    onekg_dict = {}
     for article in all_articles_info:
         counter += 1
         print(counter)
@@ -82,14 +83,14 @@ def printerr(String, *args, **kwargs):
     print(String, file=sys.stderr, *args, **kwargs)
 
 def validate_file(file_path, hash):
-    """
+    '''
     Validates a file against an MD5 hash value
 
     :param file_path: path to the file for hash validation
     :type file_path:  string
     :param hash:      expected hash value of the file
     :type hash:       string -- MD5 hash value
-    """
+    '''
     m = hashlib.md5()
     with open(file_path, 'rb') as f:
         while True:
@@ -133,10 +134,13 @@ def download(url, file_path, hash=None, timeout=10):
         logging.debug('IO Error - %s' % e)
     finally:
         # rename the temp download file to the correct name if fully downloaded
+        print(file_size)
+        print(os.path.getsize(tmp_file_path))
         if file_size == os.path.getsize(tmp_file_path):
             # if there's a hash value, validate the file
             if hash and not validate_file(tmp_file_path, hash):
                 raise Exception('Error validating the file against its MD5 hash')
+            print(tmp_file_path, file_path)
             shutil.move(tmp_file_path, file_path)
         elif file_size == -1:
             raise Exception('Error getting Content-Length from server: %s' % url)

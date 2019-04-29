@@ -8,7 +8,7 @@ Logging is now implemented.
 '''
 
 #import hashlib, json, os, logging, retrying
-import os, logging
+import os, logging, json, sys
 
 import requests
 from requests.exceptions import HTTPError
@@ -29,6 +29,9 @@ COLLECTION_ID = 4414307
 ## get token
 
 ## methods
+
+def printerr(String, *args, **kwargs):
+    print(String, sys.stderr, *args, **kwargs)
 
 def logthis(msg,logger=None):
     if logger:

@@ -1,7 +1,7 @@
 ## Query and download 1000 Genomes gVCF located on figshare
 
 Author: Sean Cho (sean.cho@jhmi.edu)
-Version: 0.10.0
+Version: 0.10.1
 
 These scripts query and download gVCF files reprocessed from 1000 Genomes low depth
 WGS data located on [figshare](https://figshare.com/collections/1000_Genomes_gVCFs/4414307).
@@ -15,14 +15,18 @@ queries and downloads.
 
 ### Requirements
 
-The script is written in Python3 and uses the `requests` module.
+- Python 3.6+
+- requests
 
 ### Installation
 
-Simply clone the repository.
+Clone the repository.
 
 ```
 git clone git@github.com:sean-cho/figshare_onekg.git
+cd figshare_onekg
+python3 figshare_onekg.py --version
+python3 figshare_onekg.py --help
 ```
 
 ### Usage
@@ -37,13 +41,18 @@ you will be downloading.
 python3 figshare_onekg.py --no-download
 ```
 
+This will be particularly useful to extract download urls to use with another download
+software such as Aspera.
+
 #### Download all files
 
 By default, the script downloads all the gVCFs. Do keep in mind though that there
 are 14TB of data, and it is likely that you will need ~30 for your purposes.
 
+The argument `-d` specifies the download directory.
+
 ```
-python3 figshare_onekg.py
+python3 figshare_onekg.py -d /path/to/data
 ```
 
 #### Download n files
@@ -72,5 +81,6 @@ python3 figshare_onekg.py -p IBS -sp AFR
 ### Changelog
 
 ```
+20190428: v0.10.1: Bug fixes and updated README.
 20190428: v0.10.0: init. basic implementation.
 ```
