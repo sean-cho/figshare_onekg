@@ -1,7 +1,8 @@
 ## Query and download 1000 Genomes gVCF located on figshare
 
 Author: Sean Cho (sean.cho@jhmi.edu)
-Version: 0.10.1
+
+Version: 0.10.2
 
 These scripts query and download gVCF files reprocessed from 1000 Genomes low depth
 WGS data located on [figshare](https://figshare.com/collections/1000_Genomes_gVCFs/4414307).
@@ -17,6 +18,7 @@ queries and downloads.
 
 - Python 3.6+
 - requests
+- tqdm
 
 ### Installation
 
@@ -81,6 +83,7 @@ python3 figshare_onekg.py -p IBS -sp AFR
 ### Changelog
 
 ```
+20190428: v0.10.2: Added progress bar using tqdm. Download url set directly to S3.
 20190428: v0.10.1: Bug fixes and updated README.
 20190428: v0.10.0: init. basic implementation.
 ```

@@ -5,13 +5,14 @@ Queries 1000 Genome gVCFs collection on figshare and
 download files if specified.
 '''
 
-import pickle, os, sys, argparse, json
+import pickle, os, sys, argparse, json, math
 import logging
 from logging import FileHandler, StreamHandler
 import requests, shutil, hashlib
+from tqdm import tqdm
 from figshare_api import *
 
-__VERSION = '0.10.0'
+__VERSION = '0.10.2'
 
 def get_args():
     parser = argparse.ArgumentParser(description='Query and download 1000 Genomes gVCFs from figshare collection.')
@@ -52,6 +53,12 @@ def logthis(String, logger=None):
         logger.info(String)
     else:
         printerr(String)
+
+def fmt_size(Size):
+    for pf in ['','K','M','G','T','P']:
+        if abs(Size) < 1024:
+            return '%3.1f%sB' % (Size, pf)
+        Size /= 1024.0
 
 def get_metadata(logger=None):
     all_articles = get_collection_articles()
@@ -94,7 +101,7 @@ def validate_file(file_path, hash):
     m = hashlib.md5()
     with open(file_path, 'rb') as f:
         while True:
-            chunk = f.read(1000 * 1000) # 1MB
+            chunk = f.read(1024 * 1024) # 1MB
             if not chunk:
                 break
             m.update(chunk)
@@ -102,6 +109,8 @@ def validate_file(file_path, hash):
 
 def download(url, file_path, hash=None, timeout=10):
     '''
+    Changed logging. Added progress bar.
+    Modified from:
     Source: https://gist.github.com/idolpx/921fc79368903d3a90800ef979abb787
     Credit: idolpx
     Performs a HTTP(S) download that can be restarted if prematurely terminated.
@@ -115,36 +124,36 @@ def download(url, file_path, hash=None, timeout=10):
      # don't download if the file exists
     if os.path.exists(file_path):
         return
-    block_size = 1000 * 1000 # 1MB
+    block_size = 1024 * 1024 # 1MB
     tmp_file_path = file_path + '.part'
     first_byte = os.path.getsize(tmp_file_path) if os.path.exists(tmp_file_path) else 0
     file_mode = 'ab' if first_byte else 'wb'
-    logging.debug('Starting download at %.1fMB' % (first_byte / 1e6))
+    logthis('Starting download at %.1fMB' % (first_byte / 1048576))
     file_size = -1
     try:
-        file_size = int(requests.head(url).headers['Content-length'])
-        logging.debug('File size is %s' % file_size)
+        file_size = int(requests.head(url).headers['Content-Length'])
+        logthis('File size is %s' % fmt_size(file_size))
         headers = {"Range": "bytes=%s-" % first_byte}
         r = requests.get(url, headers=headers, stream=True)
         with open(tmp_file_path, file_mode) as f:
-            for chunk in r.iter_content(chunk_size=block_size):
+            for chunk in tqdm(r.iter_content(chunk_size=block_size), initial=first_byte/block_size, total=math.ceil(file_size//block_size), unit='MB', unit_scale=True):
+            #for chunk in r.iter_content(chunk_size=block_size):
                 if chunk: # filter out keep-alive new chunks
                     f.write(chunk)
     except IOError as e:
-        logging.debug('IO Error - %s' % e)
+        logthis('IO Error - %s' % e)
     finally:
         # rename the temp download file to the correct name if fully downloaded
-        print(file_size)
-        print(os.path.getsize(tmp_file_path))
+        #print(file_size)
+        #print(os.path.getsize(tmp_file_path))
         if file_size == os.path.getsize(tmp_file_path):
             # if there's a hash value, validate the file
             if hash and not validate_file(tmp_file_path, hash):
                 raise Exception('Error validating the file against its MD5 hash')
-            print(tmp_file_path, file_path)
+            #print(tmp_file_path, file_path)
             shutil.move(tmp_file_path, file_path)
         elif file_size == -1:
             raise Exception('Error getting Content-Length from server: %s' % url)
-
 
 def main(args):
     if args.version:
@@ -212,8 +221,10 @@ def main(args):
         for entry in keepset:
             logthis(f'Downloading {entry["sample_id"]}', logger)
             outfile = f'{args.dir}/{entry["filename"]}'
-            download(entry['url'], outfile, hash=entry['md5'])
-            break
+            ## link given by figshare api redirects to s3 get actual location 
+            s3_url = requests.head(entry['url']).headers['Location']
+            ## download
+            download(s3_url, outfile, hash=entry['md5'])
     return 0
 
 if __name__ == '__main__':
