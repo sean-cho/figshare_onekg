@@ -10,9 +10,9 @@ There are a total of 2,530 gVCFs aligned to the hs37d5 genome, processed using
 [Sentieon tools](http://www.sentieon.com/), which are comparable to and compatible with GATK.
 The complete data set is a little more than 14TB in size.
 
-By default, a cache of the metadata for the gVCFs will be downloaded and stored as
+By default, a cache of the metadata for the gVCFs will be downloaded and serialized as
 a `pickle` dictionary at `~/.figshare/onekg_dict.pickle`. This will speed up future
-queries and downloads.
+queries and downloads. An option for JSON serialization will be included in the future.
 
 ### Requirements
 
